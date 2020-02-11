@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import kplr
 
-KOI_CATA = "/data/cumulative.csv"
+KOI_CATA = "/data/mcquillan_acf_kois.txt"
 KOI_CATA = pkg_resources.resource_filename(__name__, KOI_CATA)
 
 def koi2kid(koi_id):
@@ -111,3 +111,6 @@ def kepler_planet(koi_id, i=None):
                                name=p.kepoi_name))
     return planets  
 
+#def my_custom_corrector_func(lc):
+#    corrected_lc = lc.normalize().flatten(window_length=401, return_trend=True)[1]
+#    return corrected_lc

@@ -6,7 +6,7 @@ import pkg_resources
 
 import numpy as np
 import warnings
-from utils import *
+from .utils import *
 from lightkurve import search_lightcurvefile
 import copy
 
@@ -22,7 +22,7 @@ class StellarLightCurve(object):
     -----------
     (Cont.)
     """
-    def __init__(self, mission, xoi_id = -1.0, xic_id = -1.0, mask_planets = True):
+    def __init__(self, mission, xoi_id = -1.0, xic_id = -1.0, mask_planets = True, lctype="rotation"):
         self.xic_id = xic_id
         self.xoi_id = xoi_id
         self.mission = mission
@@ -32,33 +32,44 @@ class StellarLightCurve(object):
             else:
                 self.xic_id = koi2kid(self.xoi_id)
         self.mask_planets = mask_planets
+        self.lctype = lctype
         
         start = 0
-        lcf = None
         if mission == "Kepler":
             prefix = "KIC"
         if mission == "TESS":
             prefix = "TIC"
-        while type(lcf) is type(None):
-            try:
-                search_lc = search_lightcurvefile(prefix + str(self.xic_id), quarter=start)
-                if  len(search_lc.target_name)!=0:
-                    lcf = search_lightcurvefile(prefix + str(self.xic_id), quarter=start).download(target=str(self.xic_id)).PDCSAP_FLUX.normalize()
-                    break
-                else:
-                    start = start + 1
-            except AttributeError:
-                start = start + 1
-                #print(lcf, type(lcf))
-                pass
+        lcfs = search_lightcurvefile(str(self.xic_id), mission='Kepler').download_all()
+
+        if self.lctype == "rotation":
+            corrector_func = lambda x:x.normalize().flatten(window_length=401, return_trend=True)[1]
+        elif self.lctype == "granulation":
+            corrector_func = lambda x:x.normalize().flatten(window_length=401, return_trend=False)
+        elif self.lctype == "hybrid":
+            corrector_func = lambda x:x.normalize()
+        
+        
+        stitched_lc = lcfs.PDCSAP_FLUX.stitch(corrector_func=corrector_func)
+        #while type(lcf) is type(None):
+        #    try:
+        #        search_lc = search_lightcurvefile(prefix + str(self.xic_id), quarter=start)
+        #        if  len(search_lc.target_name)!=0:
+        #            lcf = search_lightcurvefile(prefix + str(self.xic_id), quarter=start).download(target=str(self.xic_id)).PDCSAP_FLUX.normalize()
+        #            break
+        #        else:
+        #            start = start + 1
+        #    except AttributeError:
+        #        start = start + 1
+        #        #print(lcf, type(lcf))
+        #        pass
+        #    
+        #for q in range(start+1,17):
+        #    try:
+        #        lcf = lcf.append(search_lightcurvefile(prefix + str(self.xic_id), quarter=q).download(target=str(self.xic_id)).PDCSAP_FLUX.normalize())
+        #    except AttributeError:
+        #        continue
             
-        for q in range(start+1,17):
-            try:
-                lcf = lcf.append(search_lightcurvefile(prefix + str(self.xic_id), quarter=q).download(target=str(self.xic_id)).PDCSAP_FLUX.normalize())
-            except AttributeError:
-                continue
-            
-        self.lcf = lcf
+        self.lcf = stitched_lc
         self._mask = None
         
     def copy(self):

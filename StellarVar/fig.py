@@ -20,7 +20,7 @@ def fig_local_view(lc, Prot):
     yerr = lc.lcf.flux_err
     lower = np.quantile(x, [1/6.0, 1/2.0, 5/6.0]) - 100.0
     upper = np.quantile(x, [1/6.0, 1/2.0, 5/6.0]) + 100.0
-    fig, ax = plt.subplots(3,1, figsize=(6.9, 4.8))
+    fig, ax = plt.subplots(3,1, figsize=(20, 8.5))
     for i in range(len(ax)):
         x_sub = x[(x>lower[i])&(x<upper[i])]
         y_sub = y[(x>lower[i])&(x<upper[i])]
