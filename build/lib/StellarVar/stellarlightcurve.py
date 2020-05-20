@@ -7,6 +7,7 @@ import pkg_resources
 import numpy as np
 import warnings
 from .utils import *
+import lightkurve as lk
 from lightkurve import search_lightcurvefile
 import copy
 
@@ -22,24 +23,20 @@ class StellarLightCurve(object):
     -----------
     (Cont.)
     """
-    def __init__(self, mission, xoi_id = -1.0, xic_id = -1.0, mask_planets = True, lctype="rotation"):
+    def __init__(self, mission, xoi_id = -1.0, xic_id = -1.0, mask_planets = True, lctype="rotation", time=None, flux=None, flux_err=None):
         self.xic_id = xic_id
         self.xoi_id = xoi_id
         self.mission = mission
         if self.xic_id == -1.0:
             if self.xoi_id == -1.0:
-                raise SyntaxError("You miss the input id of the star")
+                if self.mission == None:
+                    pass
+                else:
+                    raise SyntaxError("You miss the input id of the star")
             else:
                 self.xic_id = koi2kid(self.xoi_id)
         self.mask_planets = mask_planets
         self.lctype = lctype
-        
-        start = 0
-        if mission == "Kepler":
-            prefix = "KIC"
-        if mission == "TESS":
-            prefix = "TIC"
-        lcfs = search_lightcurvefile(str(self.xic_id), mission='Kepler').download_all()
 
         if self.lctype == "rotation":
             corrector_func = lambda x:x.normalize().flatten(window_length=401, return_trend=True)[1]
@@ -48,8 +45,24 @@ class StellarLightCurve(object):
         elif self.lctype == "hybrid":
             corrector_func = lambda x:x.normalize()
         
+        if mission != None:
+            start = 0
+            if mission == "Kepler":
+                prefix = "KIC "
+            if mission == "TESS":
+                prefix = "TIC "
+            lcfs = search_lightcurvefile(self.xic_id, mission=mission).download_all()
+            stitched_lc = lcfs.PDCSAP_FLUX.stitch(corrector_func=corrector_func)
+            self.lcf = stitched_lc
+        else:
+            lcfs = lk.LightCurve(time=time, flux=flux, flux_err=flux_err)
+            normed_lc = lcfs
+            self.lcf = normed_lc
+
+        self._mask = None
+            
+
         
-        stitched_lc = lcfs.PDCSAP_FLUX.stitch(corrector_func=corrector_func)
         #while type(lcf) is type(None):
         #    try:
         #        search_lc = search_lightcurvefile(prefix + str(self.xic_id), quarter=start)
@@ -68,9 +81,6 @@ class StellarLightCurve(object):
         #        lcf = lcf.append(search_lightcurvefile(prefix + str(self.xic_id), quarter=q).download(target=str(self.xic_id)).PDCSAP_FLUX.normalize())
         #    except AttributeError:
         #        continue
-            
-        self.lcf = stitched_lc
-        self._mask = None
         
     def copy(self):
         """Returns a copy of the LightCurve object.
@@ -120,6 +130,14 @@ class StellarLightCurve(object):
         lc.lcf.time = np.ma.array(lc.lcf.time, mask=mask).compressed()
         lc.lcf.flux = np.ma.array(lc.lcf.flux, mask=mask).compressed()
         lc.lcf.flux_err = np.ma.array(lc.lcf.flux_err, mask=mask).compressed()
+        
+        return lc
+
+    def normalize(self):
+        lc = self.copy()
+        mu = np.nanmean(lc.lcf.flux)
+        lc.lcf.flux = (lc.lcf.flux - mu)/mu
+        lc.lcf.flux_err = lc.lcf.flux_err / mu
         
         return lc
     

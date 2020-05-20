@@ -111,6 +111,10 @@ def kepler_planet(koi_id, i=None):
                                name=p.kepoi_name))
     return planets  
 
+def window_rms(a, window_size):
+    a2 = np.power(a,2)
+    window = np.ones(window_size)/float(window_size)
+    return np.sqrt(np.convolve(a2, window, 'same'))
 #def my_custom_corrector_func(lc):
 #    corrected_lc = lc.normalize().flatten(window_length=401, return_trend=True)[1]
 #    return corrected_lc
