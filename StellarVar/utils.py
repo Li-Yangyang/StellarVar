@@ -89,6 +89,9 @@ class Planets(object):
         return duration_e2/24.0
     
 def kepler_planet(koi_id, i=None):
+    """
+    Find exist koi planets in the star and assemble parameters into Planet class
+    """
     client = kplr.API("./data/")
     
     if type(i)==int:
@@ -112,6 +115,9 @@ def kepler_planet(koi_id, i=None):
     return planets  
 
 def window_rms(a, window_size):
+    """
+    Compute rms within given mean value window
+    """
     a2 = np.power(a,2)
     window = np.ones(window_size)/float(window_size)
     return np.sqrt(np.convolve(a2, window, 'same'))

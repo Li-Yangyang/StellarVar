@@ -10,4 +10,7 @@ setup(name='StellarVar',
       author_email='yangyangli@ufl.edu',
       packages=['StellarVar'],
       package_data={'StellarVar': ['data/lightcurve.mplstyle', 'data/mcquillan_acf_kois.txt', 'data/cumulative.csv']},
+      install_requires=[
+          'kplr', 'exoplanet', 'lightkurve'
+      ],
       )

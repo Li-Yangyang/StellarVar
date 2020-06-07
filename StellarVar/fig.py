@@ -97,6 +97,10 @@ def fig_lombscargle(lc, min_period=None, max_period=None, Pgp=None, Pmcq=None):
     return peak['period'], fig
 
 def fig_psd(vgp, summary, lctype="granulation"):
+    """
+    display the power spectral density plots towards the light curve.
+    TODO: improve this function for more lctypes, now we just implement for granulation component.
+    """
     from scipy import signal
     fig = plt.figure(figsize=(6.9, 5.5))
     if lctype == "granulation":

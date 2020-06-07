@@ -302,6 +302,10 @@ class VarGPPred(object):
         return figure
 
     def GP_fitting_plots(self, summary):
+        """
+        Display fitting results towards hybrid mode with their lombscargle periodiogram
+        TODO: improve this plot function for more fitting modes
+        """
         import matplotlib.pylab as plt
         import matplotlib.ticker as tck
         from astropy.timeseries import LombScargle
